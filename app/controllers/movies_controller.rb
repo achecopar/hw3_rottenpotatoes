@@ -7,6 +7,7 @@ class MoviesController < ApplicationController
   end
 
   def index
+    #debugger
     sort = params[:sort] || session[:sort]
     case sort
     when 'title'
@@ -20,13 +21,28 @@ class MoviesController < ApplicationController
     if @selected_ratings == {}
       @selected_ratings = Hash[@all_ratings.map {|rating| [rating, rating]}]
     end
-    
+
     if params[:sort] != session[:sort] or params[:ratings] != session[:ratings]
       session[:sort] = sort
       session[:ratings] = @selected_ratings
       redirect_to :sort => sort, :ratings => @selected_ratings and return
     end
     @movies = Movie.find_all_by_rating(@selected_ratings.keys, ordering)
+  end
+
+  def similar_movies_search
+	#debugger
+	movie = Movie.find_by_id(params[:id])
+        search_term = params[:search_term].to_s
+        search_value= movie.attributes[search_term]
+	if search_value==nil 
+	   flash[:notice]="'#{movie.title}' has no #{search_term} info"
+	   #flash.keep
+	   redirect_to :action => "index", :controller => "movies" and return
+	else 
+	   @movies = Movie.search(search_term,search_value)
+	   @search_term = params[:search_term]
+	end	
   end
 
   def new
